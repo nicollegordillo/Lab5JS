@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <script type="application/javascript">
+      const container = document.createElement('div'); // Create a container for messages
+      container.style.marginBottom = "20px";
+      document.body.append(container);
+
+      const t = document.createElement('textarea');
+      t.style.borderRadius = "10px";
+      t.setAttribute("maxlength", "140");
+      document.body.append(t);
+      
+      
+
+
+      const b = document.createElement('button');
+      b.style.cursor = "pointer";
+      b.append('SEND');
+      document.body.append(b);
+      
+      const characterCount = document.createElement('label');
+      characterCount.textContent="140"
+      document.body.append(characterCount);
+
+
+      const updateCharacterCount = () => {
+        const remainingCharacters = 140 - t.value.length;
+        characterCount.textContent = remainingCharacters;
+      };
+
+      const getMessages = async () => {
+        const response = await fetch('https://chat.tiburoncin.lat/messages');
+        const messages = await response.json();
+        
+
+        container.innerHTML = "";
+
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const message = messages[i];
+          const messageContainer = document.createElement('div'); // Create a container for each message
+          const messageText = `<span style="font-weight: bold; color: blue;">${message.username}</span><br><span style="color: green;">${message.message}</span><br>`; 
+          messageContainer.innerHTML = messageText;
+          container.append(messageContainer);
+          messageContainer.style.marginBottom = "10px";
+          
+        }
+      };
+
+      const postMessage = async () => {
+        const body = {
+          username: 'Dennis',
+          message: t.value,
+        };
+        const response = await fetch('https://chat.tiburoncin.lat/messages', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        getMessages();
+        t.value = "";
+      };
+
+      b.addEventListener('click', postMessage);
+      
+      t.addEventListener('input', updateCharacterCount);
+
+      getMessages();
+    </script>
+  </body>
+</html>
