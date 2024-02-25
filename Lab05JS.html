@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <script type="application/javascript">
+      const container = document.createElement('div');
+      function adjustContainerHeight() {
+    	const viewportHeight = window.innerHeight;
+    	const textareaContainerHeight = textareaContainer.offsetHeight;
+	const labelContainerHeight = labelCharWrap.offsetHeight;
+    	const inputcH=inputContainer.offsetHeight;
+    	const userin=usernameInput.offsetHeight;
+    	container.style.maxHeight = `${viewportHeight -inputcH-userin- textareaContainerHeight-labelContainerHeight-8}px`;
+    }
+      container.style.overflowY = 'auto';
+      container.style.padding = '10px';
+      container.style.backgroundColor='white';
+      document.body.append(container);
+
+      const inputContainer = document.createElement('div');
+      inputContainer.classList.add('input-container');
+      const label = document.createElement('label');
+      label.textContent = 'Who are you?';
+      label.style.fontFamily='Andale Mono, monospace, sans-serif';
+      const usernameInput = document.createElement('input');
+      usernameInput.setAttribute('type', 'text');
+      usernameInput.setAttribute('placeholder', 'Enter your username');
+      usernameInput.style.border = 'none';
+      usernameInput.style.borderBottom = '1px solid #ced4da';
+      usernameInput.style.width = '100%';
+      inputContainer.appendChild(label);
+      inputContainer.appendChild(usernameInput);
+      inputContainer.style.backgroundColor='white';
+      usernameInput.style.backgroundColor='white';
+      document.body.insertBefore(inputContainer, container);
+      
+      const getUsername = () => {
+        const username = usernameInput.value.trim();
+        return username !== '' ? username : 'Anonymous';
+      };
+const bottomContainer = document.createElement('div');
+    bottomContainer.style.position = 'fixed';
+    bottomContainer.style.bottom = '0';
+    bottomContainer.style.left = '0';
+    bottomContainer.style.width = '100%';
+    bottomContainer.style.backgroundColor='white';
+    bottomContainer.style.boxSizing = 'border-box';
+    bottomContainer.style.display = 'flex';
+    bottomContainer.style.flexDirection = 'column';
+    bottomContainer.style.alignItems = 'center';
+    document.body.appendChild(bottomContainer);
+
+      const textareaContainer = document.createElement('div');
+      textareaContainer.style.position = 'relative';
+      textareaContainer.style.marginTop = '0px';
+      textareaContainer.style.borderRadius='15px';
+      textareaContainer.style.width='99%';
+      textareaContainer.style.backgroundColor='white';
+
+
+      const t = document.createElement('textarea');
+      t.style.borderRadius = "15px";
+      t.setAttribute("maxlength", "140");
+      t.style.width = 'calc(100% - 50px - 10px)';
+      t.style.border = 'none';
+      t.style.margin = '0px';
+      t.style.outline = 'none'; 
+      t.style.resize = 'none'; 
+      t.style.overflow = 'hidden'; 
+      textareaContainer.appendChild(t);
+      t.style.backgroundColor='white';
+      textareaContainer.style.border = "1px solid #BBBBBB"
+      bottomContainer.appendChild(textareaContainer);
+
+      const b = document.createElement('button');
+      b.style.cursor = "pointer";
+      b.style.position = 'absolute';
+      b.style.bottom = '10px';
+      b.style.right = '5px';
+      b.style.width = '50px';
+      b.style.borderRadius='15px';
+      b.style.borderColor='#BBBBBB';
+      b.style.backgroundColor= '#DDDDDD';
+      b.style.color='white';
+      b.style.border='none';
+      b.append('SEND');
+      b.disabled = true; // Initially disable button
+      textareaContainer.appendChild(b);
+      
+      const labelCharWrap = document.createElement('div');
+      labelCharWrap.style.display = 'flex';
+      labelCharWrap.style.flexDirection = 'column';
+      labelCharWrap.style.alignItems = 'center';
+      labelCharWrap.style.backgroundColor='white';
+      
+      const characterCount = document.createElement('label');
+      characterCount.textContent = "140/140";
+      characterCount.style.color= '#BBBBBB';
+      characterCount.style.marginTop = "0px";
+      labelCharWrap.appendChild(characterCount);
+     bottomContainer.appendChild(labelCharWrap);
+      //document.body.append(characterCount);
+
+      function updateCharacterCount()  {
+        // Enable/disable button based on textarea content
+        b.disabled = t.value.trim() === '' && t.value.length === 0;
+        // Change button color when disabled
+        if (b.disabled) {
+          b.style.backgroundColor = '#DDDDDD';
+          characterCount.textContent ='140/140';
+        } else {
+          const remainingCharacters = 140 - t.value.length;
+          characterCount.textContent = `${remainingCharacters}/140`;
+          b.style.backgroundColor = '#1E1E24';
+        }
+      };
+
+      const getMessages = async () => {
+      try {
+        const response = await fetch('https://chat.tiburoncin.lat/messages');
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+        const messages = await response.json();
+        const isAtBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 1;
+        container.innerHTML = "";
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const message = messages[i];
+          const messageContainer = document.createElement('div');
+          messageContainer.style.width = '100%'; // Occupy entire width of messages container
+          messageContainer.style.marginBottom = "20px";
+
+          // Add username
+          const usernameSpan = document.createElement('span');
+          usernameSpan.style.fontSize = '1em';
+          usernameSpan.style.fontFamily = 'Andale Mono, monospace, sans-serif';
+          usernameSpan.style.fontWeight='bold';
+          usernameSpan.style.color = '#353535';
+          usernameSpan.textContent = message.username;
+          messageContainer.appendChild(usernameSpan);
+          messageContainer.appendChild(document.createElement('br'));
+
+          // Detect image URLs in message content
+          const messageContent = message.message;
+          const urls = messageContent.match(/\bhttps?:\/\/\S+\b/g) || [];
+
+          // Add image previews or regular webpage links
+          const contentContainer = document.createElement('div');
+          contentContainer.style.fontFamily = 'Trebuchet MS';
+          contentContainer.style.color = '#495057';
+          contentContainer.style.wordWrap = 'break-word';
+
+          for (const url of urls) {
+            if (isImageURL(url)) {
+              const imgElement = document.createElement('img');
+              imgElement.src = url;
+              imgElement.style.maxWidth = '50%';
+              imgElement.style.maxHeight = '50%';
+              contentContainer.appendChild(imgElement);
+            } else {
+              const link = document.createElement('a');
+              link.href = url;
+              link.textContent = url;
+              link.target = "_blank"; // Open link in a new tab
+              contentContainer.appendChild(link);
+            }
+            contentContainer.appendChild(document.createElement('br'));
+          }
+
+          if (urls.length === 0) {
+            const messageSpan = document.createElement('span');
+                messageSpan.style.fontSize = '1em';
+                messageSpan.style.fontFamily = 'Trebuchet MS';
+                messageSpan.style.color = '#7C7B7B';
+                messageSpan.style.wordWrap = 'break-word';
+                messageSpan.textContent = message.message;
+                messageContainer.appendChild(messageSpan);
+          }
+
+          messageContainer.appendChild(contentContainer);
+
+          container.appendChild(messageContainer);
+        }
+        if (isAtBottom) {
+          container.scrollTop = container.scrollHeight;
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    
+     
+     const isImageURL = (url) => {
+       return /\.(png|jpe?g|gif|bmp)(?:\?[^/]+|\/[^/]+)*$/i.test(url);
+     };
+
+     
+     
+      const postMessage = async () => {
+        const body = {
+          username: getUsername(),
+          message: t.value,
+        };
+        try {
+          const response = await fetch('https://chat.tiburoncin.lat/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+          });
+          if (!response.ok) {
+            throw new Error('Failed to post message');
+          }
+          getMessages();
+          t.value = "";
+          updateCharacterCount();
+        } catch (error) {
+          console.error('Error posting message:', error);
+        }
+        
+      };
+adjustContainerHeight();
+  window.addEventListener('resize', adjustContainerHeight);
+      b.addEventListener('click', postMessage);
+      t.addEventListener('input', updateCharacterCount);
+       
+      getMessages();
+      
+      setInterval(getMessages, 5000);
+      
+      t.addEventListener('keypress', (event) => {
+        if (event.keyCode === 13 && !event.shiftKey) { 
+          event.preventDefault();
+          if (!b.disabled) { // Only post message if button is enabled
+            postMessage(); 
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
